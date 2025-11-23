@@ -5,7 +5,10 @@ import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.sql.*;
@@ -16,18 +19,17 @@ import static org.assertj.core.api.Assertions.fail;
 
 /**
  * End-to-end CLI tests for the JDBC CRUD console application.
- *
+ * <p>
  * Contract expected by these tests (implementation must follow for tests to pass):
  * - The app reads menu choices from standard input and writes results to standard output.
  * - Menu options:
- *   1. List moon missions (read-only from table `moon_mission`) and print spacecraft names.
- *   2. Create an account (table `account`): prompts for first name, last name, ssn, password.
- *   3. Update an account password: prompts for user_id and new password.
- *   4. Delete an account: prompts for user_id to delete.
- *   0. Exit program.
+ * 1. List moon missions (read-only from table `moon_mission`) and print spacecraft names.
+ * 2. Create an account (table `account`): prompts for first name, last name, ssn, password.
+ * 3. Update an account password: prompts for user_id and new password.
+ * 4. Delete an account: prompts for user_id to delete.
+ * 0. Exit program.
  * - The app should use these system properties for DB access (configured by the tests):
- *   APP_JDBC_URL, APP_DB_USER, APP_DB_PASS
- * - Login flow expected by the tests: prompt for SSN then Password; validate against `account.ssn` + `account.password`.
+ * APP_JDBC_URL, APP_DB_USER, APP_DB_PASS
  * - After each operation the app prints a confirmation message or the read result.
  */
 @Testcontainers
@@ -61,8 +63,8 @@ public class CliAppIT {
     @Order(1)
     void login_withInvalidCredentials_showsErrorMessage() throws Exception {
         String input = String.join(System.lineSeparator(),
-                // Expect app to prompt for ssn then password
-                "000000-0000",      // ssn (invalid)
+                // Expect app to prompt for username then password
+                "NoUser",            // username (invalid)
                 "badPassword",       // password (invalid)
                 "0"                  // exit immediately after
         ) + System.lineSeparator();
@@ -70,19 +72,17 @@ public class CliAppIT {
         String out = runMainWithInput(input);
 
         assertThat(out)
-                .containsIgnoringCase("ssn")
-                .containsIgnoringCase("password")
-                .containsIgnoringCase("invalid");
+                .containsIgnoringCase("Invalid username or password");
     }
 
     @Test
     @Order(2)
     void login_withValidCredentials_thenCanUseApplication() throws Exception {
         // Using a known seeded account from init.sql:
-        // first_name = Angela, last_name = Fransson, ssn = 371108-9221
+        // first_name = Angela, last_name = Fransson -> username (name column) = AngFra
         // password = MB=V4cbAqPz4vqmQ
         String input = String.join(System.lineSeparator(),
-                "371108-9221",          // ssn
+                "AngFra",                // username
                 "MB=V4cbAqPz4vqmQ",     // password
                 "1",                    // list missions after successful login
                 "0"                     // exit
@@ -91,7 +91,7 @@ public class CliAppIT {
         String out = runMainWithInput(input);
 
         assertThat(out)
-                .containsIgnoringCase("ssn")
+                .containsIgnoringCase("username")
                 .containsIgnoringCase("password")
                 .as("Expected output to contain at least one known spacecraft from seed data after successful login")
                 .containsAnyOf("Pioneer 0", "Luna 2", "Luna 3", "Ranger 7");
@@ -102,7 +102,7 @@ public class CliAppIT {
     void listMoonMissions_printsKnownMissionNames() throws Exception {
         String input = String.join(System.lineSeparator(),
                 // login first
-                "371108-9221",
+                "AngFra",
                 "MB=V4cbAqPz4vqmQ",
                 "1", // list missions
                 "0"  // exit
@@ -116,16 +116,16 @@ public class CliAppIT {
     }
 
     @Test
-    @Order(4)
+    @Order(6)
     void createAccount_thenCanSeeItInDatabase_andPrintsConfirmation() throws Exception {
         // Count rows before to later verify delta via direct JDBC
         int before = countAccounts();
 
         String input = String.join(System.lineSeparator(),
                 // login first
-                "371108-9221",
+                "AngFra",
                 "MB=V4cbAqPz4vqmQ",
-                "2",            // create account
+                "4",            // create account (menu option 4 after reordering)
                 "Ada",          // first name
                 "Lovelace",     // last name
                 "181512-0001",  // ssn
@@ -144,16 +144,16 @@ public class CliAppIT {
     }
 
     @Test
-    @Order(5)
+    @Order(7)
     void updateAccountPassword_thenRowIsUpdated_andPrintsConfirmation() throws Exception {
         // Prepare: insert a minimal account row directly
         long userId = insertAccount("Test", "User", "111111-1111", "oldpass");
 
         String input = String.join(System.lineSeparator(),
                 // login first
-                "371108-9221",
+                "AngFra",
                 "MB=V4cbAqPz4vqmQ",
-                "3",                 // update password
+                "5",                 // update password (menu option 5 after reordering)
                 Long.toString(userId),// user_id
                 "newpass123",        // new password
                 "0"                  // exit
@@ -169,15 +169,15 @@ public class CliAppIT {
     }
 
     @Test
-    @Order(6)
+    @Order(8)
     void deleteAccount_thenRowIsGone_andPrintsConfirmation() throws Exception {
         long userId = insertAccount("To", "Delete", "222222-2222", "pw");
 
         String input = String.join(System.lineSeparator(),
                 // login first
-                "371108-9221",
+                "AngFra",
                 "MB=V4cbAqPz4vqmQ",
-                "4",                 // delete account
+                "6",                 // delete account (menu option 6 after reordering)
                 Long.toString(userId),// user_id
                 "0"                  // exit
         ) + System.lineSeparator();
@@ -188,6 +188,55 @@ public class CliAppIT {
                 .containsIgnoringCase("deleted");
 
         assertThat(existsAccount(userId)).isFalse();
+    }
+
+    @Test
+    @Order(4)
+    void getMoonMissionById_printsDetails() throws Exception {
+        // Arrange: use a known mission id from seed data (see init.sql)
+        // Insert order defines auto-increment ids; 'Luna 3' is the 5th insert -> mission_id = 5
+        long missionId = 5L;
+
+        String input = String.join(System.lineSeparator(),
+                // login first
+                "AngFra",
+                "MB=V4cbAqPz4vqmQ",
+                "2",                 // menu: get mission by id (reordered to option 2)
+                Long.toString(missionId),
+                "0"                  // exit
+        ) + System.lineSeparator();
+
+        String out = runMainWithInput(input);
+
+        assertThat(out)
+                .as("CLI should print details that include the spacecraft name for the selected mission")
+                .contains("Luna 3")
+                .containsIgnoringCase("mission")
+                .containsIgnoringCase("id");
+    }
+
+    @Test
+    @Order(5)
+    void countMoonMissionsForYear_printsTotal() throws Exception {
+        int year = 2019; // Seed data contains several missions in 2019
+        int expected = 3; // From init.sql: Beresheet, Chandrayaan-2, TESS
+
+        String input = String.join(System.lineSeparator(),
+                // login first
+                "AngFra",
+                "MB=V4cbAqPz4vqmQ",
+                "3",                 // menu: count missions by year (reordered to option 3)
+                Integer.toString(year),
+                "0"                  // exit
+        ) + System.lineSeparator();
+
+        String out = runMainWithInput(input);
+
+        assertThat(out)
+                .as("CLI should print the number of missions for the given year")
+                .contains(Integer.toString(expected))
+                .containsIgnoringCase("missions")
+                .contains(Integer.toString(year));
     }
 
     private static String runMainWithInput(String input) throws Exception {

@@ -15,20 +15,18 @@ public class Main {
     }
 
     public void run() {
-        //Open connection to database example
         // Resolve DB settings with precedence: System properties -> Environment variables
         String jdbcUrl = resolveConfig("APP_JDBC_URL", "APP_JDBC_URL");
-        String dbUser  = resolveConfig("APP_DB_USER", "APP_DB_USER");
-        String dbPass  = resolveConfig("APP_DB_PASS", "APP_DB_PASS");
+        String dbUser = resolveConfig("APP_DB_USER", "APP_DB_USER");
+        String dbPass = resolveConfig("APP_DB_PASS", "APP_DB_PASS");
 
         if (jdbcUrl == null || dbUser == null || dbPass == null) {
             throw new IllegalStateException(
                     "Missing DB configuration. Provide APP_JDBC_URL, APP_DB_USER, APP_DB_PASS " +
-                    "as system properties (-Dkey=value) or environment variables.");
+                            "as system properties (-Dkey=value) or environment variables.");
         }
 
         try (Connection connection = DriverManager.getConnection(jdbcUrl, dbUser, dbPass)) {
-
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

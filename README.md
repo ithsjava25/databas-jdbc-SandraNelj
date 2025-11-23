@@ -9,7 +9,7 @@ Because Testcontainers needs a container runtime, you must have Docker running o
     - `APP_JDBC_URL`
     - `APP_DB_USER`
     - `APP_DB_PASS`
-  - Drive your CLI via STDIN/STDOUT: first a login flow (SSN → password), then menu operations (list missions, create/update/delete account), and finally exit.
+  - Drive your CLI via STDIN/STDOUT: first a login flow (username → password), then menu operations (list missions, get mission by id, count missions by year, create/update/delete account), and finally exit.
 
 - How to run the tests
   - Ensure Docker Desktop (Windows/macOS) or Docker Engine (Linux) is running.
@@ -86,20 +86,22 @@ Tip: Maven test runs inside IntelliJ
 
 G (base level)
 - Implement the CLI application logic in `Main` starting at the `run()` method so that the provided tests pass. Concretely, your CLI should:
-  - Prompt for `SSN:` and then `Password:` on startup and validate them against the `account` table (`ssn` + `password`).
+  - Prompt for `Username:` and then `Password:` on startup and validate them against the `account` table (`name` + `password`).
   - If the login is invalid, print a message containing the word `invalid` and allow exiting via option `0`.
   - If the login is valid, present a menu with options:
    ```
       1) List moon missions (prints spacecraft names from `moon_mission`).
-      2) Create an account (prompts: first name, last name, ssn, password; prints confirmation).
-      3) Update an account password (prompts: user_id, new password; prints confirmation).
-      4) Delete an account (prompts: user_id; prints confirmation).
+      2) Get a moon mission by mission_id (prints details for that mission).
+      3) Count missions for a given year (prompts: year; prints the number of missions launched that year).
+      4) Create an account (prompts: first name, last name, ssn, password; prints confirmation).
+      5) Update an account password (prompts: user_id, new password; prints confirmation).
+      6) Delete an account (prompts: user_id; prints confirmation).
       0) Exit.
    ```
   - Use the DB settings provided via `APP_JDBC_URL`, `APP_DB_USER`, `APP_DB_PASS` (already resolved in `Main`).
 
 Notes
-- Seed data in `init.sql` includes a known account used by the tests (e.g., ssn `371108-9221`, password `MB=V4cbAqPz4vqmQ`).
+- Seed data in `init.sql` includes a known account used by the tests (e.g., username `AngFra`, password `MB=V4cbAqPz4vqmQ`).
 - The tests are ordered to run login checks first and then the other menu actions.
 
 ---
