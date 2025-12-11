@@ -14,6 +14,11 @@ import java.util.Scanner;
 
 public class Main {
 
+    /**
+     * Application entry point that initializes a development database when in dev mode and starts the interactive console.
+     *
+     * @param args command-line arguments; used to detect development mode (for example, "--dev" or system/VM properties)
+     */
     public static void main(String[] args) {
         if (isDevMode(args)) {
             DevDatabaseInitializer.start();
@@ -21,7 +26,18 @@ public class Main {
         new Main().run();
     }
 
-    public void run() {
+    /**
+ * Runs the application's interactive console: initializes persistence, authenticates a user,
+ * and enters the main command loop for managing moon missions and accounts.
+ *
+ * <p>Resolves database configuration (system properties first, then environment variables),
+ * constructs a DataSource, repository and service layer, prompts for credentials and authenticates.
+ * After successful login, presents a menu to list missions, retrieve a mission by ID, count missions
+ * by year, create an account, update a password, delete an account, or exit.</p>
+ *
+ * @throws IllegalStateException if any of APP_JDBC_URL, APP_DB_USER or APP_DB_PASS is not provided
+ */
+public void run() {
         // Resolve DB settings with precedence: System properties -> Environment variables
         String jdbcUrl = resolveConfig("APP_JDBC_URL", "APP_JDBC_URL");
         String dbUser  = resolveConfig("APP_DB_USER", "APP_DB_USER");
