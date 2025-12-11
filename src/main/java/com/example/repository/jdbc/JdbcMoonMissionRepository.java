@@ -10,10 +10,20 @@ import java.util.List;
 public class JdbcMoonMissionRepository implements MoonMissionRepository {
     private final DataSource dataSource;
 
+    /**
+     * Creates a JdbcMoonMissionRepository that uses the given DataSource to obtain database connections.
+     *
+     * @param dataSource the DataSource used to obtain connections for repository operations
+     */
     public JdbcMoonMissionRepository(DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
+    /**
+     * Retrieve spacecraft names from the moon_mission table ordered by mission_id.
+     *
+     * @return a list of spacecraft names in ascending order of their mission_id
+     */
     @Override
     public List<String> listSpacecraftNames() {
         List<String> list = new ArrayList<>();
@@ -34,6 +44,13 @@ public class JdbcMoonMissionRepository implements MoonMissionRepository {
         }
         return list;
     }
+    /**
+     * Retrieves the MoonMission with the given mission_id from the database.
+     *
+     * @param missionId the mission_id to look up
+     * @return the MoonMission for the specified mission_id, or null if no matching record exists
+     * @throws RuntimeException if a database access error occurs
+     */
     @Override
     public MoonMission getById(int missionId) {
         String sql = "select * from moon_mission where mission_id = ?";
@@ -61,6 +78,12 @@ public class JdbcMoonMissionRepository implements MoonMissionRepository {
         }
     }
 
+    /**
+     * Counts moon missions whose launch date falls in the specified year.
+     *
+     * @param year the launch year to match (e.g., 1969)
+     * @return the number of moon missions launched in the given year
+     */
     @Override
     public int countByYear(int year) {
 
