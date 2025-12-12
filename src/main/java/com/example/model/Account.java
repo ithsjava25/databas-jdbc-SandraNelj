@@ -8,6 +8,17 @@ public class Account {
     private String lastName;
     private String ssn;
 
+    /**
+     * Create a new Account with the provided user identifier and personal details.
+     *
+     * @param userId    the numeric identifier for the user
+     * @param name      the account name or username
+     * @param password  the account password
+     * @param firstName the user's first name
+     * @param lastName  the user's last name
+     * @param ssn       the user's Social Security Number
+     */
+
     public Account(int userId, String name, String password, String firstName,
                    String lastName, String ssn) {
         this.userId = userId;

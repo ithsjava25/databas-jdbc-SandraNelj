@@ -34,11 +34,19 @@ public class JdbcAccountRepository implements AccountRepository {
     public void create(String firstName, String lastName,
                        String ssn, String password) {
 
-        String name =
-                firstName.substring(0, 3).substring(0, 1).toUpperCase() +
-                        firstName.substring(1, 3).toLowerCase() +
-                        lastName.substring(0, 1).toUpperCase() +
-                        lastName.substring(1, 3).toLowerCase();
+        String trimmedFirst = firstName.trim();
+        String trimmedLast = lastName.trim();
+        if (trimmedFirst.isEmpty() || trimmedLast.isEmpty()) {
+            throw new IllegalArgumentException("First name and last name must not be empty");
+        }
+
+        String firstPart = trimmedFirst.substring(0, 1).toUpperCase() +
+                trimmedFirst.substring(1, Math.min(3, trimmedFirst.length())).toLowerCase();
+
+        String lastPart = trimmedLast.substring(0, 1).toUpperCase() +
+                trimmedLast.substring(1, Math.min(3, trimmedLast.length())).toLowerCase();
+
+        String name = firstPart + lastPart;
 
         String sql = "Insert into account (name, password, first_name, last_name, ssn) values (?, ?, ?, ?, ?)";
 

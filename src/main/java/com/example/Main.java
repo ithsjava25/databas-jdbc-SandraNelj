@@ -14,12 +14,30 @@ import java.util.Scanner;
 
 public class Main {
 
+    /**
+     * Application entry point that initializes a development database when in dev mode and starts the interactive console.
+     *
+     * @param args command-line arguments; used to detect development mode (for example, "--dev" or system/VM properties)
+     */
+
     public static void main(String[] args) {
         if (isDevMode(args)) {
             DevDatabaseInitializer.start();
         }
         new Main().run();
     }
+    /**
+     *
+     * Runs the application's interactive console: initializes persistence, authenticates a user,
+     * and enters the main command loop for managing moon missions and accounts.
+     *
+     * <p>Resolves database configuration (system properties first, then environment variables),
+     * constructs a DataSource, repository and service layer, prompts for credentials and authenticates.
+     * After successful login, presents a menu to list missions, retrieve a mission by ID, count missions
+     * by year, create an account, update a password, delete an account, or exit.</p>
+     *
+     * @throws IllegalStateException if any of APP_JDBC_URL, APP_DB_USER or APP_DB_PASS is not provided
+     */
 
     public void run() {
         // Resolve DB settings with precedence: System properties -> Environment variables
@@ -70,17 +88,30 @@ public class Main {
 
             String choice = scanner.nextLine().trim();
 
-            //List all missions
+
             switch (choice) {
+                /**
+                 * List all missions
+                 */
                 case "1": {
                     moonMissionService.listSpacecraft().forEach(System.out::println);
                     break;
                 }
 
-                //Get mission by ID
+                /**
+                 * Get missions by ID
+                 */
                 case "2": {
                     System.out.println("Mission_id: ");
-                    int id = Integer.parseInt(scanner.nextLine());
+                    String input = scanner.nextLine().trim();
+
+                    int id;
+                    try {
+                        id = Integer.parseInt(input);
+                    } catch (NumberFormatException e) {
+                        System.out.println("Invalid input. Please try again.");
+                        break;
+                    }
                     var m = moonMissionService.getById(id);
 
                     if (m==null) {
@@ -89,25 +120,35 @@ public class Main {
                         System.out.println("Spacecraft: " + m.getSpacecraft());
                         System.out.println("Launch date " + m.getLaunchDate());
                         System.out.println("Carrier Rocket: " + m.getCarrierRocket());
-                        System.out.println("Operator" + m.getOperator());
+                        System.out.println("Operator: " + m.getOperator());
                         System.out.println("Mission type: " + m.getMissionType());
                         System.out.println("Outcome: " + m.getOutcome());
                     }
                     break;
                 }
 
-                //Count missions per year
+                /**
+                 * Count missions per year
+                 */
                 case "3": {
                     System.out.println("year: ");
                     if (!scanner.hasNextLine()) return;
                     String yearStr = scanner.nextLine().trim();
-                    int year = Integer.parseInt(yearStr);
+                    int year;
+                    try {
+                        year = Integer.parseInt(yearStr);
+                    } catch (NumberFormatException e) {
+                        System.out.println("Invalid year. Please enter a number!");
+                        break;
+                    }
                     int count = moonMissionService.countByYear(year);
                     System.out.println(count + " missions in " + year);
                     break;
                 }
 
-                //Create account
+                /**
+                 * Create account
+                 */
                 case "4": {
                     System.out.println("First name: ");
                     String firstName = scanner.nextLine();
@@ -123,27 +164,48 @@ public class Main {
                     break;
                 }
 
-                //Update password
+                /**
+                 * Update password
+                 */
                 case "5": {
                     System.out.println("User_id: ");
-                    int id = Integer.parseInt(scanner.nextLine());
+                    String input = scanner.nextLine().trim();
 
-                    System.out.println("New password: ");
-                    String newPw = scanner.nextLine();
+                    int id;
+                    try {
+                        id = Integer.parseInt(input);
+                    } catch (NumberFormatException e) {
+                        System.out.println("Invalid User-ID. Please enter a number!");
+                        break;
+                    }
 
-                    accountService.updatePassword(id, newPw);
-                    System.out.println("Password updated.");
-                    break;
-                }
+                        System.out.println("New password: ");
+                        String newPw = scanner.nextLine();
 
+                        accountService.updatePassword(id, newPw);
+                        System.out.println("Password updated.");
+                        break;
+                    }
+
+
+                /**
+                 * Delete account
+                 */
             case "6": {
                 System.out.println("User_id: ");
-                int id = Integer.parseInt(scanner.nextLine());
+                String input = scanner.nextLine();
 
-                accountService.delete(id);
-                System.out.println("Account deleted.");
-                break;
-            }
+                int id;
+                try {
+                    id = Integer.parseInt(input);
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid UserID. Please enter numbers!");
+                    break;
+                }
+                    accountService.delete(id);
+                    System.out.println("Account deleted.");
+                    break;
+                }
 
             case "0": {
                 return;
