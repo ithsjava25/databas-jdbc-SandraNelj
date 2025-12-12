@@ -114,8 +114,8 @@ public class Main {
                     }
                     var m = moonMissionService.getById(id);
 
-                    if (m==null) {
-                    System.out.println("Mission not found.");
+                    if (m == null) {
+                        System.out.println("Mission not found.");
                     } else {
                         System.out.println("Spacecraft: " + m.getSpacecraft());
                         System.out.println("Launch date: " + m.getLaunchDate());
@@ -179,13 +179,13 @@ public class Main {
                         break;
                     }
 
-                        System.out.println("New password: ");
-                        String newPw = scanner.nextLine();
+                    System.out.println("New password: ");
+                    String newPw = scanner.nextLine();
 
-                        accountService.updatePassword(id, newPw);
-                        System.out.println("Password updated.");
-                        break;
-                    }
+                    accountService.updatePassword(id, newPw);
+                    System.out.println("Password updated.");
+                    break;
+                }
 
 
                 /**
