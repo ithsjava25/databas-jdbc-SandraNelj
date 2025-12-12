@@ -193,7 +193,7 @@ public class Main {
                  */
             case "6": {
                 System.out.println("User_id: ");
-                String input = scanner.nextLine();
+                String input = scanner.nextLine().trim();
 
                 int id;
                 try {
@@ -212,6 +212,7 @@ public class Main {
             }
                 default:  {
                     System.out.println("Invalid choice.");
+                    break;
                 }
         }
     }
@@ -220,9 +221,6 @@ public class Main {
     /**
      * Determines if the application is running in development mode based on system properties,
      * environment variables, or command-line arguments.
-     *
-     * @param args an array of command-line arguments
-     * @return {@code true} if the application is in development mode; {@code false} otherwise
      */
     private static boolean isDevMode(String[] args) {
         if (Boolean.getBoolean("devMode"))  //Add VM option -DdevMode=true
