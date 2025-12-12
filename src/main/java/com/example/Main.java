@@ -118,7 +118,7 @@ public class Main {
                     System.out.println("Mission not found.");
                     } else {
                         System.out.println("Spacecraft: " + m.getSpacecraft());
-                        System.out.println("Launch date " + m.getLaunchDate());
+                        System.out.println("Launch date: " + m.getLaunchDate());
                         System.out.println("Carrier Rocket: " + m.getCarrierRocket());
                         System.out.println("Operator: " + m.getOperator());
                         System.out.println("Mission type: " + m.getMissionType());
